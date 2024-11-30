@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa SVG</title>
+    <style>
+        svg {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mapa SVG - cidade do IBGE</h1>
+    <form id="form">
+        <label for="estado">Estado:</label>
+        <input type="text" id="estado" name="estado" placeholder="Digite o estado" required>
+        <label for="cidade">Município:</label>
+        <input type="text" id="cidade" name="cidade" placeholder="Digite o município" required>
+        <button type="submit">Buscar</button>
+    </form>
+
+    <svg id="mapa" style="max-height: 100vh;" xmlns="http://www.w3.org/2000/svg"></svg>
+
+    <script>
+        const form = document.getElementById('form');
+        const svgElement = document.getElementById('mapa');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Obter valores do formulário
+            const estado = document.getElementById('estado').value.trim();
+            const cidade = document.getElementById('cidade').value.trim();
+
+            try {
+                // Fazer requisição para a API
+                const response = await fetch(`http://localhost:3000/svg/${estado}/${cidade}`);
+                if (!response.ok) throw new Error('Erro ao buscar dados');
+
+                const data = await response.json();
+                
+                // Verifica se os dados foram recebidos corretamente
+                console.log(data.viewBox);
+                console.log(data.pathestados);
+                if (data.viewBox) {
+                    svgElement.setAttribute('viewBox', data.viewBox); // Definindo viewBox no SVG
+                }
+
+                // Limpar o conteúdo anterior e inserir os paths
+                svgElement.innerHTML = '';
+
+                // Inserir paths SVG no elemento <svg>
+                if (data.pathestados) {
+                    svgElement.innerHTML += `<path d="${data.pathestados}"  strokeWidth="0.01" stroke="none" stroke-width="2"></path>`;
+                }
+
+                if (data.pathmunicipios) {
+                    svgElement.innerHTML += `<path d="${data.pathmunicipios}" fill="red" strokeWidth="0.01" stroke-width="2"></path>`;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Não foi possível carregar o mapa.');
+            }
+        });
+    </script>
+</body>
+</html>
